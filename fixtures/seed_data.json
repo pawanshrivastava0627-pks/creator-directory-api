@@ -1,0 +1,130 @@
+[
+  {
+    "model": "accounts.agency",
+    "pk": "a1",
+    "fields": {
+      "name": "Nova Talent",
+      "plan": "free"
+    }
+  },
+  {
+    "model": "accounts.agency",
+    "pk": "a2",
+    "fields": {
+      "name": "Bright Star Agency",
+      "plan": "pro"
+    }
+  },
+  {
+    "model": "accounts.agency",
+    "pk": "a3",
+    "fields": {
+      "name": "Solo Creators Co",
+      "plan": "free"
+    }
+  },
+
+  {
+    "model": "accounts.user",
+    "pk": "u1",
+    "fields": {
+      "agency": "a1",
+      "email": "owner@nova.com",
+      "role": "owner"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": "u2",
+    "fields": {
+      "agency": "a1",
+      "email": "admin@nova.com",
+      "role": "admin"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": "u3",
+    "fields": {
+      "agency": "a2",
+      "email": "owner@brightstar.com",
+      "role": "owner"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": "u4",
+    "fields": {
+      "agency": "a3",
+      "email": "owner@solo.com",
+      "role": "owner"
+    }
+  },
+
+  {
+    "model": "creators.creator",
+    "pk": "c1",
+    "fields": {
+      "name": "Priya Sharma",
+      "niche": "beauty",
+      "follower_count": 45000,
+      "engagement_rate": 3.8,
+      "email": "priya@example.com"
+    }
+  },
+  {
+    "model": "creators.creator",
+    "pk": "c2",
+    "fields": {
+      "name": "Rahul Verma",
+      "niche": "fitness",
+      "follower_count": 120000,
+      "engagement_rate": 2.1,
+      "email": "rahul@example.com"
+    }
+  },
+  {
+    "model": "creators.creator",
+    "pk": "c3",
+    "fields": {
+      "name": "Ananya Iyer",
+      "niche": "travel",
+      "follower_count": 8000,
+      "engagement_rate": 6.4,
+      "email": "ananya@example.com"
+    }
+  },
+
+  {
+    "model": "creators.agencylink",
+    "fields": {
+      "agency": "a1",
+      "creator": "c1",
+      "notes": "Great for skincare campaigns"
+    }
+  },
+  {
+    "model": "creators.agencylink",
+    "fields": {
+      "agency": "a2",
+      "creator": "c1",
+      "notes": "Booked for Q1 shoot"
+    }
+  },
+  {
+    "model": "creators.agencylink",
+    "fields": {
+      "agency": "a2",
+      "creator": "c2",
+      "notes": "High reach, slower replies"
+    }
+  },
+  {
+    "model": "creators.agencylink",
+    "fields": {
+      "agency": "a1",
+      "creator": "c3",
+      "notes": "Micro-influencer, very responsive"
+    }
+  }
+]

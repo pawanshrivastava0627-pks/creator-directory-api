@@ -7,7 +7,7 @@ class Creator(models.Model):
 
     name = models.CharField(max_length=255)
     niche = models.CharField(max_length=100)
-    follower_count = models.IntegerField()
+    follower_count = models.PositiveIntegerField()
     engagement_rate = models.FloatField()
     email = models.EmailField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -31,7 +31,7 @@ class AgencyLink(models.Model):
         related_name="agency_links"
     )
 
-    notes = models.TextField()
+    notes = models.TextField(blank=True)
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
