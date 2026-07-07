@@ -1,10 +1,9 @@
-import uuid
 from django.db import models
 from accounts.models import Agency
 
 
 class Creator(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, max_length=10)
 
     name = models.CharField(max_length=255)
     niche = models.CharField(max_length=100)
@@ -18,7 +17,7 @@ class Creator(models.Model):
 
 
 class AgencyLink(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
 
     agency = models.ForeignKey(
         Agency,

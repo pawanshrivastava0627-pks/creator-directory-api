@@ -1,9 +1,8 @@
-import uuid
 from django.db import models
 
 
 class Agency(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, max_length=10)
 
     PLAN_CHOICES = [
         ("free", "Free"),
@@ -19,7 +18,7 @@ class Agency(models.Model):
 
 
 class User(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, max_length=10)
 
     ROLE_CHOICES = [
         ("owner", "Owner"),
