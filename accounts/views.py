@@ -20,27 +20,39 @@ class UserListView(APIView):
 
     def post(self, request):
 
-        # Sirf owner aur admin user create kar sakte hain
-        if request.user.role not in ["owner", "admin"]:
+    # Sirf owner aur admin user create kar sakte hain
+     if request.user.role not in ["owner", "admin"]:
+        return Response(
+            {"error": "Permission denied."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+     serializer = UserSerializer(data=request.data)
+
+     if serializer.is_valid():
+
+        # Admin owner create nahi kar sakta
+        if (
+            request.user.role == "admin"
+            and serializer.validated_data["role"] == "owner"
+        ):
             return Response(
-                {"error": "Permission denied."},
+                {
+                    "error": "Admin cannot create owner users."
+                },
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = UserSerializer(data=request.data)
-
-        if serializer.is_valid():
-
-            serializer.save(
-                agency=request.user.agency
-            )
-
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
+        serializer.save(
+            agency=request.user.agency
+        )
 
         return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+            serializer.data,
+            status=status.HTTP_201_CREATED
         )
+
+     return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+    )
