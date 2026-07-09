@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-
+from .permissions import IsOwnerOrAdmin
 from .models import Creator
 from .serializers import CreatorSerializer
 from rest_framework import status
@@ -9,7 +9,7 @@ from .models import Creator, AgencyLink
 from .serializers import CreatorSerializer, CreatorLinkSerializer
 
 class CreatorListView(APIView):
-    
+    permission_classes = [IsOwnerOrAdmin]
 
     def get(self, request):
 
@@ -55,6 +55,7 @@ class CreatorListView(APIView):
       return Response(serializer.errors, status=400)
     
 class CreatorDetailView(APIView):
+    permission_classes = [IsOwnerOrAdmin]
 
     def get(self, request, pk):
 
@@ -126,6 +127,7 @@ class CreatorDetailView(APIView):
     )
     
 class CreatorLinkView(APIView):
+    permission_classes = [IsOwnerOrAdmin]
 
     def post(self, request, pk):
 
