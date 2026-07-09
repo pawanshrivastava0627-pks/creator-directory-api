@@ -23,6 +23,19 @@ class CreatorListView(APIView):
 
         return Response(serializer.data)
     
+    def post(self, request):
+
+      serializer = CreatorSerializer(
+        data=request.data,
+        context={"request": request}
+    )
+
+      if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+      return Response(serializer.errors, status=400)
+    
 class CreatorDetailView(APIView):
 
     def get(self, request, pk):
