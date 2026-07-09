@@ -9,6 +9,11 @@ class AgencySerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = User
         fields = "__all__"
+        read_only_fields = [
+            "agency",
+            "created_at",
+        ]
