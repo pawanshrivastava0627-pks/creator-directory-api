@@ -25,6 +25,8 @@ class CreatorListView(APIView):
 
         return Response(serializer.data)
     
+    
+    
     def post(self, request):
 
       serializer = CreatorSerializer(
@@ -47,10 +49,10 @@ class CreatorListView(APIView):
         )
 
       if serializer.is_valid():
-       serializer.save()
-       return Response(serializer.data, status=201)
+         serializer.save()
+         return Response(serializer.data, status=201)
 
-       return Response(serializer.errors, status=400)
+      return Response(serializer.errors, status=400)
     
 class CreatorDetailView(APIView):
 
@@ -69,6 +71,59 @@ class CreatorDetailView(APIView):
         )
 
         return Response(serializer.data)
+    
+    def patch(self, request, pk):
+
+       creator = get_object_or_404(
+        Creator.objects.filter(
+            agency_links__agency=request.user.agency
+        ).distinct(),
+        pk=pk
+    )
+
+       serializer = CreatorSerializer(
+        creator,
+        data=request.data,
+        partial=True,
+        context={"request": request}
+    )
+
+       if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+
+       return Response(serializer.errors, status=400)
+    
+    def delete(self, request, pk):
+
+     creator = get_object_or_404(
+        Creator.objects.filter(
+            agency_links__agency=request.user.agency
+        ).distinct(),
+        pk=pk
+    )
+
+    # Current agency ka link
+     link = AgencyLink.objects.get(
+        agency=request.user.agency,
+        creator=creator
+    )
+
+    # Link remove karo
+     link.delete()
+
+    # Agar koi link nahi bacha to creator bhi delete
+     if not creator.agency_links.exists():
+        creator.delete()
+        return Response(
+            {"message": "Creator deleted successfully."},
+            status=status.HTTP_200_OK
+        )
+
+     return Response(
+        {"message": "Creator unlinked successfully."},
+        status=status.HTTP_200_OK
+    )
     
 class CreatorLinkView(APIView):
 
