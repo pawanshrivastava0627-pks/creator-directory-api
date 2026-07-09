@@ -50,3 +50,6 @@ class CreatorSerializer(serializers.ModelSerializer):
     )
 
       return creator
+
+class CreatorLinkSerializer(serializers.Serializer):
+    notes = serializers.CharField(required=False, allow_blank=True)
