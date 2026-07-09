@@ -1,12 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .permissions import IsOwnerOrAdmin
-from .models import Creator
-from .serializers import CreatorSerializer
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
+
+from django.shortcuts import get_object_or_404
+
+from .permissions import IsOwnerOrAdmin
 from .models import Creator, AgencyLink
 from .serializers import CreatorSerializer, CreatorLinkSerializer
+
 
 class CreatorListView(APIView):
     permission_classes = [IsOwnerOrAdmin]
@@ -15,45 +17,87 @@ class CreatorListView(APIView):
 
         creators = Creator.objects.filter(
             agency_links__agency=request.user.agency
-        ).distinct()
+        ).distinct().order_by("-created_at")
+
+        # Filtering
+        niche = request.query_params.get("niche")
+        if niche:
+            creators = creators.filter(niche=niche)
+
+        min_followers = request.query_params.get("min_followers")
+        if min_followers:
+            creators = creators.filter(
+                follower_count__gte=min_followers
+            )
+
+        # Sorting
+        ordering = request.query_params.get("ordering")
+
+        allowed_fields = [
+            "follower_count",
+            "-follower_count",
+            "engagement_rate",
+            "-engagement_rate",
+            "name",
+            "-name",
+        ]
+
+        if ordering in allowed_fields:
+            creators = creators.order_by(ordering)
+
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 2
+
+        page = paginator.paginate_queryset(
+            creators,
+            request
+        )
 
         serializer = CreatorSerializer(
-            creators,
+            page,
             many=True,
             context={"request": request}
         )
 
-        return Response(serializer.data)
-    
-    
-    
-    def post(self, request):
-
-      serializer = CreatorSerializer(
-      data=request.data,
-      context={"request": request}
-)
-
-      agency = request.user.agency
-
-      if agency.plan == "free":
-
-       creator_count = agency.creator_links.count()
-
-       if creator_count >= 5:
-        return Response(
-            {
-                "error": "Free plan can link only 5 creators."
-            },
-            status=402
+        return paginator.get_paginated_response(
+            serializer.data
         )
 
-      if serializer.is_valid():
-         serializer.save()
-         return Response(serializer.data, status=201)
+    def post(self, request):
 
-      return Response(serializer.errors, status=400)
-    
+        serializer = CreatorSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+
+        agency = request.user.agency
+
+        if agency.plan == "free":
+
+            creator_count = agency.creator_links.count()
+
+            if creator_count >= 5:
+                return Response(
+                    {
+                        "error": "Free plan can link only 5 creators."
+                    },
+                    status=status.HTTP_402_PAYMENT_REQUIRED
+                )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
 class CreatorDetailView(APIView):
     permission_classes = [IsOwnerOrAdmin]
 
@@ -72,60 +116,61 @@ class CreatorDetailView(APIView):
         )
 
         return Response(serializer.data)
-    
+
     def patch(self, request, pk):
 
-       creator = get_object_or_404(
-        Creator.objects.filter(
-            agency_links__agency=request.user.agency
-        ).distinct(),
-        pk=pk
-    )
+        creator = get_object_or_404(
+            Creator.objects.filter(
+                agency_links__agency=request.user.agency
+            ).distinct(),
+            pk=pk
+        )
 
-       serializer = CreatorSerializer(
-        creator,
-        data=request.data,
-        partial=True,
-        context={"request": request}
-    )
+        serializer = CreatorSerializer(
+            creator,
+            data=request.data,
+            partial=True,
+            context={"request": request}
+        )
 
-       if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
 
-       return Response(serializer.errors, status=400)
-    
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     def delete(self, request, pk):
 
-     creator = get_object_or_404(
-        Creator.objects.filter(
-            agency_links__agency=request.user.agency
-        ).distinct(),
-        pk=pk
-    )
+        creator = get_object_or_404(
+            Creator.objects.filter(
+                agency_links__agency=request.user.agency
+            ).distinct(),
+            pk=pk
+        )
 
-    # Current agency ka link
-     link = AgencyLink.objects.get(
-        agency=request.user.agency,
-        creator=creator
-    )
+        link = AgencyLink.objects.get(
+            agency=request.user.agency,
+            creator=creator
+        )
 
-    # Link remove karo
-     link.delete()
+        link.delete()
 
-    # Agar koi link nahi bacha to creator bhi delete
-     if not creator.agency_links.exists():
-        creator.delete()
+        if not creator.agency_links.exists():
+            creator.delete()
+            return Response(
+                {"message": "Creator deleted successfully."},
+                status=status.HTTP_200_OK
+            )
+
         return Response(
-            {"message": "Creator deleted successfully."},
+            {"message": "Creator unlinked successfully."},
             status=status.HTTP_200_OK
         )
 
-     return Response(
-        {"message": "Creator unlinked successfully."},
-        status=status.HTTP_200_OK
-    )
-    
+
 class CreatorLinkView(APIView):
     permission_classes = [IsOwnerOrAdmin]
 
@@ -133,15 +178,19 @@ class CreatorLinkView(APIView):
 
         agency = request.user.agency
 
-        # Free plan check
         if agency.plan == "free":
             if agency.creator_links.count() >= 5:
                 return Response(
-                    {"error": "Free plan can link only 5 creators."},
+                    {
+                        "error": "Free plan can link only 5 creators."
+                    },
                     status=status.HTTP_402_PAYMENT_REQUIRED
                 )
 
-        creator = get_object_or_404(Creator, pk=pk)
+        creator = get_object_or_404(
+            Creator,
+            pk=pk
+        )
 
         if AgencyLink.objects.filter(
             agency=agency,
@@ -153,18 +202,25 @@ class CreatorLinkView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        serializer = CreatorLinkSerializer(data=request.data)
+        serializer = CreatorLinkSerializer(
+            data=request.data
+        )
 
         if serializer.is_valid():
 
             AgencyLink.objects.create(
                 agency=agency,
                 creator=creator,
-                notes=serializer.validated_data.get("notes", "")
+                notes=serializer.validated_data.get(
+                    "notes",
+                    ""
+                )
             )
 
             return Response(
-                {"message": "Creator linked successfully."},
+                {
+                    "message": "Creator linked successfully."
+                },
                 status=status.HTTP_201_CREATED
             )
 
