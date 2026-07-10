@@ -17,3 +17,4 @@ class HeaderAuthentication(BaseAuthentication):
             raise AuthenticationFailed("Invalid User.")
 
         return (user, None)
+        
